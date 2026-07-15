@@ -142,7 +142,6 @@
   }
   @media (max-width: 880px){
     .layout{grid-template-columns: 1fr;}
-    .sidebar{position:static; max-height:none; overflow-y:visible;}
   }
 
   .panel{
@@ -162,6 +161,55 @@
     overscroll-behavior:contain;
     -webkit-overflow-scrolling:touch;
   }
+  /* "More below" scroll cue — overlays the bottom of the scrollable
+     sidebar with a fading pill whenever there's unscrolled content
+     beneath, so the long topic lists don't read as complete when
+     they're just clipped by the panel height. */
+  .scroll-cue{
+    position:sticky; bottom:0;
+    height:54px;
+    margin-top:-54px; /* overlay the last 54px of list content instead of
+                          adding extra scrollable space below it */
+    display:flex; align-items:flex-end; justify-content:center;
+    padding-bottom:8px;
+    background:linear-gradient(180deg, transparent, var(--panel) 70%);
+    border-radius:0 0 var(--radius) var(--radius);
+    pointer-events:none;
+    opacity:0; transform:translateY(4px);
+    transition:opacity .2s ease, transform .2s ease;
+    z-index:1;
+  }
+  .scroll-cue.visible{opacity:1; transform:translateY(0);}
+  .scroll-cue .pill{
+    display:inline-flex; align-items:center; gap:5px;
+    font-family:var(--mono); font-size:10.5px; letter-spacing:.05em; text-transform:uppercase;
+    color:var(--ink-soft); background:var(--panel);
+    border:1px solid var(--panel-border); border-radius:20px;
+    padding:4px 11px 4px 12px;
+    box-shadow:0 2px 8px rgba(0,0,0,.14);
+    animation:cue-bounce 1.6s ease-in-out infinite;
+  }
+  .scroll-cue .pill svg{width:10px; height:10px; flex:0 0 auto;}
+  @keyframes cue-bounce{
+    0%,100%{ transform:translateY(0); }
+    50%{ transform:translateY(3px); }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .scroll-cue .pill{animation:none;}
+  }
+  @media (max-width: 880px){
+    /* On narrow/mobile widths the sidebar shouldn't be its own nested
+       scroll box (a "scroll trap" inside the page scroll) — let it
+       flow naturally with the page instead. This block must come
+       after the base .sidebar/.scroll-cue rules above: with equal
+       specificity, a media rule declared earlier in the stylesheet
+       loses to a later unconditional rule regardless of whether the
+       query matches, so putting it up near .layout (as it originally
+       was) silently never applied. */
+    .sidebar{position:static; max-height:none; overflow-y:visible;}
+    .scroll-cue{display:none;}
+  }
+
   .side-section{margin-bottom:20px;}
   .side-section:last-child{margin-bottom:0;}
   .side-label{
@@ -484,6 +532,12 @@
         <input type="text" id="refSearch" placeholder="Search topics…">
       </div>
       <div id="refList"></div>
+    </div>
+
+    <div class="scroll-cue" id="scrollCue" aria-hidden="true">
+      <span class="pill">More below
+        <svg viewBox="0 0 12 12" fill="none"><path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </span>
     </div>
   </div>
 
@@ -3435,6 +3489,25 @@ function escapeHtml(str){
 // the palette/shape/mood when the person types a concept in the AI Doodle
 // box; until then it runs on sensible defaults. Falls back silently on any
 // API/parse failure. Disabled entirely for prefers-reduced-motion.
+(function initScrollCue(){
+  const sb = document.querySelector('.sidebar');
+  const cue = document.getElementById('scrollCue');
+  if(!sb || !cue) return;
+  function update(){
+    const hasMore = sb.scrollHeight - sb.scrollTop - sb.clientHeight > 12;
+    cue.classList.toggle('visible', hasMore);
+  }
+  sb.addEventListener('scroll', update, {passive:true});
+  window.addEventListener('resize', update);
+  // The sidebar's content is swapped/rebuilt a lot (mode switch, ds
+  // selection, ref search, build-your-own errors, etc.) — rather than
+  // hooking every call site, just watch the DOM and re-measure.
+  new MutationObserver(update).observe(sb, {childList:true, subtree:true, attributes:true, attributeFilter:['style','class']});
+  if(window.ResizeObserver) new ResizeObserver(update).observe(sb);
+  requestAnimationFrame(update);
+  window.addEventListener('load', update);
+})();
+
 (function initBackgroundGraph(){
   const canvas = document.getElementById('bgCanvas');
   if (!canvas) return;
