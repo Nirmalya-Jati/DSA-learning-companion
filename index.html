@@ -288,6 +288,31 @@
   .ref-related button{padding:3px 9px; font-size:12px; margin:2px 4px 2px 0;}
   .ref-empty{padding:40px; text-align:center; color:var(--ink-faint); font-family:var(--mono); font-size:13px;}
 
+  /* Theory & Algorithm panel (per-topic, in viz mode) */
+  .theory-panel{margin-top:18px;}
+  .theory-head{
+    display:flex; align-items:center; justify-content:space-between; cursor:pointer;
+    padding:12px 16px; border-bottom:1px solid transparent; user-select:none;
+  }
+  .theory-panel.open .theory-head{border-bottom-color:var(--panel-border);}
+  .theory-head h3{
+    font-family:var(--mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--ink-faint); margin:0;
+  }
+  .theory-toggle{
+    font-family:var(--mono); font-size:11px; padding:4px 9px; border-radius:4px;
+  }
+  .theory-body{display:none; padding:4px 26px 22px;}
+  .theory-panel.open .theory-body{display:block;}
+  .theory-body .ref-detail{padding:14px 0 0; max-width:none;}
+  .theory-body .ref-detail h4:first-of-type{margin-top:6px;}
+  .algo-block{margin-bottom:14px; border:1px solid var(--panel-border); border-radius:5px; overflow:hidden;}
+  .algo-block:last-child{margin-bottom:0;}
+  .algo-block-title{
+    font-family:var(--mono); font-size:12.5px; font-weight:600; padding:8px 12px;
+    background:var(--bg); border-bottom:1px solid var(--panel-border); color:var(--ink);
+  }
+
   /* ---- complexity widget ---- */
   .cx-widget{border:1px solid var(--panel-border); border-radius:6px; padding:16px; margin-top:6px; background:#FCFBF7;}
   .cx-row{display:flex; align-items:center; gap:10px; margin-bottom:10px;}
@@ -400,6 +425,14 @@
         <div class="traversal-log" id="traversalLog"></div>
       </div>
     </div>
+
+    <div class="panel theory-panel" id="theoryPanel">
+      <div class="theory-head" id="theoryHead">
+        <h3 id="theoryHeadTitle">Theory &amp; Algorithm — Array</h3>
+        <button class="theory-toggle" id="theoryToggleBtn" type="button">Show ▾</button>
+      </div>
+      <div class="theory-body" id="theoryBody"></div>
+    </div>
   </div>
 
   <!-- REFERENCE MAIN -->
@@ -436,6 +469,16 @@ function mkFrame(line, text, snapshot, hi){
    ========================================================================= */
 const ArrayDS = {
   id:'array', label:'Array', glyph:'[ ]',
+  theory:{
+    one:'A fixed-size, contiguous block of memory where each element sits at a known offset from the start, giving direct index-based access.',
+    how:[
+      'Elements are stored back-to-back in memory; the address of index i is computed directly as base + i × element size.',
+      'Because the address is computed rather than searched for, reading or writing any index takes the same constant time.',
+      'Inserting or deleting in the middle requires shifting every following element to keep the block contiguous.'
+    ],
+    complexity:{rows:[['Access','O(1)'],['Search (unsorted)','O(n)'],['Search (sorted, binary search)','O(log n)'],['Insert/Delete at end','O(1)'],['Insert/Delete at start or middle','O(n)']]},
+    use:['Storing fixed-size collections that need fast random access','The backing store for most other structures (stacks, heaps, hash tables)','Lookup tables and matrices']
+  },
   defaultState(){ return { arr:[12,5,8,21,3] }; },
   fromValues(vals){ return { arr: vals.slice(0,12) }; },
   ops:[
@@ -643,6 +686,16 @@ const ArrayDS = {
 const STACK_CAP = 8;
 const StackDS = {
   id:'stack', label:'Stack', glyph:'▤',
+  theory:{
+    one:'A LIFO (last-in, first-out) structure — the most recently added item is always the first one removed.',
+    how:[
+      'All operations happen at one end, called the top.',
+      'Push adds a new item on top; pop removes and returns the top item; peek reads it without removing it.',
+      'It can be built on an array (tracking a top index) or a linked list (inserting/removing at the head) — both give O(1) operations.'
+    ],
+    complexity:{rows:[['Push','O(1)'],['Pop','O(1)'],['Peek','O(1)'],['Search','O(n)']]},
+    use:['Function call stacks and recursion','Undo/redo history','Expression evaluation and matching brackets','Depth-first traversal using an explicit stack']
+  },
   defaultState(){ return { items:[4,9,2] }; },
   fromValues(vals){ return { items: vals.slice(0, STACK_CAP) }; },
   ops:[
@@ -720,6 +773,16 @@ const StackDS = {
 const QUEUE_CAP = 8;
 const QueueDS = {
   id:'queue', label:'Queue', glyph:'▭▭',
+  theory:{
+    one:'A FIFO (first-in, first-out) structure — items are removed in the same order they were added.',
+    how:[
+      'New items are added at the back (enqueue) and removed from the front (dequeue).',
+      'A circular buffer reuses array slots by wrapping the front/back indices around, avoiding the need to shift elements.',
+      'A linked-list implementation keeps head and tail pointers so both ends stay O(1).'
+    ],
+    complexity:{rows:[['Enqueue','O(1)'],['Dequeue','O(1)'],['Peek front','O(1)'],['Search','O(n)']]},
+    use:['Task scheduling and job queues','Breadth-first search','Buffering data between producers and consumers']
+  },
   defaultState(){
     const buf = new Array(QUEUE_CAP).fill(null);
     buf[0]=5; buf[1]=10;
@@ -810,6 +873,16 @@ const QueueDS = {
    ========================================================================= */
 const ListDS = {
   id:'list', label:'Linked List', glyph:'○→',
+  theory:{
+    one:'A chain of nodes where each node holds a value and a pointer to the next node — no contiguous memory required.',
+    how:[
+      'The list is reached through a head pointer; each node\'s "next" field links to the following node, with the last node pointing to null.',
+      'Inserting or deleting at the head is O(1) since it only touches one pointer.',
+      'Reaching any other position requires walking node by node from the head — there is no direct indexing.'
+    ],
+    complexity:{rows:[['Insert/Delete at head','O(1)'],['Insert/Delete at tail (no tail pointer)','O(n)'],['Search / access by index','O(n)'],['Space','O(n), plus one pointer per node']]},
+    use:['Implementing stacks and queues','Frequent insertions/deletions with no need for random access','Building block for hash-table chaining and adjacency lists']
+  },
   defaultState(){
     const a={id:nextId(),val:7}, b={id:nextId(),val:3}, c={id:nextId(),val:9};
     a.next=b.id; b.next=c.id; c.next=null;
@@ -978,6 +1051,17 @@ const ListDS = {
    ========================================================================= */
 const BstDS = {
   id:'bst', label:'Binary Search Tree', glyph:'△',
+  theory:{
+    one:'A binary tree where every node\'s left subtree holds smaller values and its right subtree holds larger values, keeping the structure searchable.',
+    how:[
+      'Search, insert, and delete all follow the same rule: go left if the target is smaller, right if it is larger.',
+      'In-order traversal (left, node, right) visits every value in sorted order.',
+      'Deleting a node with two children replaces it with its in-order successor (smallest value in its right subtree) to preserve the ordering property.'
+    ],
+    complexity:{rows:[['Search / Insert / Delete (balanced)','O(log n)'],['Search / Insert / Delete (worst case, unbalanced)','O(n)'],['In-order traversal','O(n)']]},
+    use:['Ordered maps and sets','Range queries — all values between X and Y','Building block for self-balancing trees like AVL and red-black trees'],
+    related:['avl','redblack']
+  },
   defaultState(){
     const s = { nodes:{}, root:null };
     [8,3,10,1,6,14].forEach(val=> bstInsertPlain(s, val));
@@ -1205,6 +1289,17 @@ function bstInsertPlain(s, val){
    ========================================================================= */
 const MatrixDS = {
   id:'matrix', label:'Matrix / 2D Array', glyph:'▦',
+  theory:{
+    one:'A 2D grid of values stored as rows and columns, usually as an array of arrays, giving two-index access.',
+    how:[
+      'Element (row, col) is reached by first indexing into the row, then the column — two O(1) lookups.',
+      'Row-major storage lays rows out one after another in memory, which is why scanning row-by-row is more cache-friendly than column-by-column.',
+      'Operations like transpose swap the roles of rows and columns without necessarily copying every value.'
+    ],
+    complexity:{rows:[['Access (row, col)','O(1)'],['Row or column sum','O(cols) or O(rows)'],['Transpose','O(rows × cols)'],['Search (unsorted)','O(rows × cols)']]},
+    use:['Images and grids (pixels, game boards)','Graph adjacency matrices','Linear algebra and scientific computing'],
+    related:['adjrep','sparse']
+  },
   buildLabel:'Rows separated by ; , values by ,', buildPlaceholder:'1,2,3;4,5,6;7,8,9',
   defaultState(){ return { data:[[12,5,8],[21,3,17],[9,14,2]] }; },
   parseBuildInput(raw){
@@ -1310,6 +1405,16 @@ const MatrixDS = {
    ========================================================================= */
 const StringDS = {
   id:'string', label:'String', glyph:'"…"',
+  theory:{
+    one:'A sequence of characters, treated as an ordered, indexable collection — many string algorithms reuse array techniques.',
+    how:[
+      'Characters are typically stored contiguously, so indexing a character is O(1), same as an array.',
+      'Two-pointer techniques — one pointer from each end, moving inward — are common for problems like reversal or palindrome checks.',
+      'Many languages make strings immutable, so "modifying" a string actually builds a brand new one.'
+    ],
+    complexity:{rows:[['Access character by index','O(1)'],['Search for a substring/character','O(n)'],['Reverse','O(n)'],['Concatenation (immutable strings)','O(n)']]},
+    use:['Text processing and parsing','Pattern matching, search, and validation','Palindrome and anagram-style problems']
+  },
   buildLabel:'Type a word or phrase', buildPlaceholder:'e.g. racecar',
   defaultState(){ return { chars:'algorithm'.split('') }; },
   parseBuildInput(raw){
@@ -1394,6 +1499,17 @@ const StringDS = {
    ========================================================================= */
 const DoublyListDS = {
   id:'dlist', label:'Doubly Linked List', glyph:'⇄',
+  theory:{
+    one:'Like a singly linked list, but every node also keeps a pointer back to its previous node — allowing traversal and edits in both directions.',
+    how:[
+      'Each node stores "prev" and "next" pointers; the list tracks both a head and a tail.',
+      'Because a tail pointer is kept, inserting or deleting at either end is O(1) — unlike a plain singly linked list.',
+      'Deleting a known node is O(1) since its neighbors are directly reachable, with no need to search for the previous node.'
+    ],
+    complexity:{rows:[['Insert/Delete at head or tail','O(1)'],['Delete a known node','O(1)'],['Search / access by index','O(n)'],['Space','O(n), two pointers per node']]},
+    use:['LRU caches, paired with a hash map','Browser history and undo/redo navigation','Deques and other double-ended structures'],
+    related:['lrulfu']
+  },
   defaultState(){
     const a={id:nextId(),val:6}, b={id:nextId(),val:2}, c={id:nextId(),val:9};
     a.next=b.id; a.prev=null; b.next=c.id; b.prev=a.id; c.next=null; c.prev=b.id;
@@ -1526,6 +1642,16 @@ const DoublyListDS = {
    ========================================================================= */
 const CircularListDS = {
   id:'clist', label:'Circular Linked List', glyph:'↻',
+  theory:{
+    one:'A linked list where the last node points back to the first, forming a ring with no null terminator.',
+    how:[
+      'Traversal must track how many nodes it has visited (or stop on returning to the start) rather than checking for null.',
+      'Inserting at the head still requires finding the current last node so it can be re-pointed to the new head.',
+      'Useful whenever data naturally cycles, since any node can serve as a starting point.'
+    ],
+    complexity:{rows:[['Insert at head','O(n) to find the last node (O(1) with a tail pointer)'],['Search','O(n)'],['Full traversal, one lap','O(n)']]},
+    use:['Round-robin scheduling (CPU time-slicing, buffering)','Multiplayer turn rotation','Circular buffers for streaming data']
+  },
   defaultState(){
     const a={id:nextId(),val:5}, b={id:nextId(),val:11}, c={id:nextId(),val:8};
     a.next=b.id; b.next=c.id; c.next=a.id;
@@ -1645,6 +1771,16 @@ const CircularListDS = {
 const DEQUE_CAP = 8;
 const DequeDS = {
   id:'deque', label:'Deque', glyph:'⇋',
+  theory:{
+    one:'A queue that supports adding and removing from both the front and the back.',
+    how:[
+      'Can be built on a doubly linked list (O(1) both ends naturally) or a circular buffer array with front and back indices.',
+      'Generalizes both stacks and queues: using only pushBack/popBack behaves like a stack; using pushBack/popFront behaves like a queue.',
+      'Enables sliding-window algorithms that need to drop items from either side as a window moves.'
+    ],
+    complexity:{rows:[['Push/Pop front','O(1)'],['Push/Pop back','O(1)'],['Search','O(n)']]},
+    use:['Sliding window maximum/minimum problems','Undo history that can trim from both ends','Work-stealing task schedulers']
+  },
   defaultState(){ return { items:[7,3,9] }; },
   fromValues(vals){ return { items: vals.slice(0, DEQUE_CAP) }; },
   ops:[
@@ -1715,6 +1851,17 @@ const DequeDS = {
    ========================================================================= */
 const HeapDS = {
   id:'heap', label:'Heap (Priority Queue)', glyph:'▲',
+  theory:{
+    one:'A complete binary tree stored in an array, where every parent is smaller (min-heap) or larger (max-heap) than its children — the extreme value always sits at the root.',
+    how:[
+      'Because the tree is complete, it can be stored in a plain array with no pointers: the node at index i has children at 2i+1 and 2i+2.',
+      'Insert adds the new value at the next open leaf, then "bubbles up" — swapping with its parent while it violates the heap order.',
+      'Extract removes the root, moves the last leaf into its place, then "bubbles down" — swapping with the smaller (or larger) child until order is restored.'
+    ],
+    complexity:{rows:[['Peek min/max','O(1)'],['Insert','O(log n)'],['Extract min/max','O(log n)'],['Build heap from n items','O(n)']]},
+    use:['Priority queues for task scheduling and event simulation',"Dijkstra's and Prim's algorithms",'Heap sort, and finding the k largest/smallest elements'],
+    related:['mst']
+  },
   defaultState(){ const arr=[]; [15,10,20,25,12,30,8].forEach(v=> heapInsertPlain(arr,v)); return { arr }; },
   fromValues(vals){ const arr=[]; vals.forEach(v=> heapInsertPlain(arr,v)); return { arr }; },
   ops:[
@@ -1817,6 +1964,17 @@ function heapInsertPlain(arr, val){
    ========================================================================= */
 const GraphDS = {
   id:'graph', label:'Graph', glyph:'◇',
+  theory:{
+    one:'A set of nodes (vertices) connected by edges — the most general structure for modeling relationships and networks.',
+    how:[
+      'Commonly represented as an adjacency list (each node stores its neighbors) or an adjacency matrix (an n×n grid marking connections).',
+      'Breadth-first search (BFS) explores level by level using a queue — finding the shortest path in an unweighted graph.',
+      'Depth-first search (DFS) dives down one path fully before backtracking, using a stack or recursion — useful for cycle detection and topological sort.'
+    ],
+    complexity:{rows:[['BFS / DFS','O(V + E)'],['Add edge (adjacency list)','O(1)'],['Check if edge exists (adjacency matrix)','O(1)'],['Check if edge exists (adjacency list)','O(degree)']]},
+    use:['Social networks, road maps, and dependency graphs','Shortest-path and network-flow problems','Recommendation systems'],
+    related:['adjrep','dag','mst','traversal']
+  },
   buildLabel:'Edges as a-b pairs, comma separated', buildPlaceholder:'0-1,0-2,1-3,2-3,3-4',
   defaultState(){ return graphFromEdges([[0,1],[0,2],[1,3],[2,3],[3,4]]); },
   parseBuildInput(raw){
@@ -1945,6 +2103,17 @@ function graphFromEdges(edges){
 const HASH_BUCKETS = 7;
 const HashTableDS = {
   id:'hash', label:'Hash Table', glyph:'#',
+  theory:{
+    one:'A structure that maps keys to values using a hash function to jump almost directly to where a key is stored, giving average O(1) lookups.',
+    how:[
+      'A hash function converts a key into an array index (the "bucket"); the value is stored there.',
+      'Collisions — two keys hashing to the same bucket — are handled by chaining, where each bucket holds a small list of entries, or by open addressing, which probes for another slot.',
+      'A good hash function spreads keys evenly across buckets; the table resizes and rehashes once it gets too full to keep chains short.'
+    ],
+    complexity:{rows:[['Insert / Search / Delete (average)','O(1)'],['Insert / Search / Delete (worst case, many collisions)','O(n)'],['Space','O(n)']]},
+    use:['Dictionaries, sets, and caches','Counting frequencies and deduplication','Database indexing and compiler symbol tables'],
+    related:['cuckoo','bloom']
+  },
   defaultState(){ const buckets=Array.from({length:HASH_BUCKETS},()=>[]); [15,22,8,29,3].forEach(v=> buckets[v%HASH_BUCKETS].push(v)); return { buckets }; },
   fromValues(vals){ const buckets=Array.from({length:HASH_BUCKETS},()=>[]); vals.forEach(v=>{ const idx=((v%HASH_BUCKETS)+HASH_BUCKETS)%HASH_BUCKETS; if(!buckets[idx].includes(v)) buckets[idx].push(v); }); return { buckets }; },
   ops:[
@@ -2017,6 +2186,16 @@ const HashTableDS = {
    ========================================================================= */
 const TrieDS = {
   id:'trie', label:'Trie', glyph:'⋔',
+  theory:{
+    one:'A tree built specifically for strings, where each path from the root spells out a prefix — nodes are shared between words with common prefixes.',
+    how:[
+      'Each node holds links to its possible next characters; a flag marks nodes where a complete word ends.',
+      'Inserting a word walks (or creates) one node per character; searching does the same and checks the end-of-word flag on the last node.',
+      'Because shared prefixes reuse the same nodes, a trie can be far more space-efficient than storing every word separately.'
+    ],
+    complexity:{rows:[['Insert a word of length k','O(k)'],['Search a word of length k','O(k)'],['Prefix search (startsWith)','O(k)'],['Space','O(total characters across all words), less with shared prefixes']]},
+    use:['Autocomplete and typeahead search','Spell checkers','IP routing tables (longest prefix match)']
+  },
   buildLabel:'Comma-separated words', buildPlaceholder:'cat, car, cart, dog',
   defaultState(){ const s=trieEmpty(); ['cat','car','cart','dog'].forEach(w=> trieInsertPlain(s,w)); return s; },
   parseBuildInput(raw){
@@ -2134,6 +2313,17 @@ function trieInsertPlain(s, word){
    ========================================================================= */
 const DsuDS = {
   id:'dsu', label:'Disjoint Set Union', glyph:'∪',
+  theory:{
+    one:'A structure that tracks a collection of disjoint sets, answering "are these two items in the same group?" and merging groups efficiently.',
+    how:[
+      'Each set is represented as a tree; every element points to a parent, and the root of the tree identifies the set.',
+      'Find follows parent pointers up to the root; path compression flattens the tree along the way so future finds are faster.',
+      'Union merges two sets by attaching one root under the other; union by rank/size keeps trees shallow by always attaching the smaller tree under the larger.'
+    ],
+    complexity:{rows:[['Find (with path compression)','O(α(n)) — practically constant'],['Union (with union by rank/size)','O(α(n)) — practically constant'],['Space','O(n)']]},
+    use:["Detecting cycles in Kruskal's minimum spanning tree algorithm",'Network connectivity queries','Image segmentation and grouping components in social graphs'],
+    related:['mst']
+  },
   buildLabel:'Unions as a-b pairs (applied in order)', buildPlaceholder:'0-1,2-3,1-2',
   defaultState(){ const parent=[0,1,2,3,4,5,6,7]; [[0,1],[2,3],[4,5]].forEach(([a,b])=> dsuUnionPlain(parent,a,b)); return { parent }; },
   parseBuildInput(raw){
@@ -2809,6 +2999,40 @@ const App = {
     this.buildOpList();
     this.buildOpFields();
     this.renderIdle();
+    this.renderTopicTheory();
+  },
+
+  renderTopicTheory(){
+    const ds = this.ds();
+    document.getElementById('theoryHeadTitle').textContent = `Theory & Algorithm — ${ds.label}`;
+    const wrap = document.getElementById('theoryBody');
+    const t = ds.theory;
+    if(!t){ wrap.innerHTML = '<p class="ref-empty">No write-up yet for this topic.</p>'; return; }
+    const rows = t.complexity ? t.complexity.rows.map(row=>`<tr><td>${escapeHtml(row[0])}</td><td>${escapeHtml(row[1])}</td></tr>`).join('') : '';
+    const algoBlocks = ds.ops.map(op=>{
+      const lines = this.opLinesPreview(ds, op);
+      if(!lines.length) return '';
+      return `<div class="algo-block"><div class="algo-block-title">${escapeHtml(op.label)}</div><div class="code-lines">${lines.map((l,i)=>`<div class="code-line"><span class="ln">${i+1}</span>${escapeHtml(l)}</div>`).join('')}</div></div>`;
+    }).join('');
+    wrap.innerHTML = `
+      <div class="ref-detail">
+        <p class="ref-oneliner">${escapeHtml(t.one)}</p>
+        <h4>How it works</h4>
+        <ul>${t.how.map(h=>`<li>${escapeHtml(h)}</li>`).join('')}</ul>
+        ${rows? `<h4>Complexity</h4><table class="ref-table"><thead><tr><th>Operation</th><th>Cost</th></tr></thead><tbody>${rows}</tbody></table>`:''}
+        ${t.use? `<h4>Where it's used</h4><div>${t.use.map(u=>`<span class="ref-use">${escapeHtml(u)}</span>`).join('')}</div>`:''}
+        <h4>Algorithms for each operation</h4>
+        ${algoBlocks || '<p class="ref-empty">No pseudocode available.</p>'}
+        ${t.related? `<h4>Related topics</h4><div class="ref-related">${t.related.map(rid=>{ const rr=REFERENCE_DATA.find(x=>x.id===rid); const dm=REGISTRY.find(x=>x.id===rid); const label = rr? rr.name : (dm? dm.label+' — try it live': rid); return `<button data-theory-ref="${rid}">${escapeHtml(label)}</button>`; }).join('')}</div>`:''}
+      </div>
+    `;
+    if(t.related){
+      wrap.querySelectorAll('[data-theory-ref]').forEach(b=> b.addEventListener('click', ()=>{
+        const rid = b.getAttribute('data-theory-ref');
+        if(REGISTRY.find(x=>x.id===rid)){ this.selectDS(rid); }
+        else if(REFERENCE_DATA.find(x=>x.id===rid)){ this.switchMode('ref'); this.selectRef(rid); }
+      }));
+    }
   },
 
   buildOpList(){
@@ -3059,6 +3283,13 @@ const App = {
     document.getElementById('modeVizBtn').addEventListener('click', ()=> this.switchMode('viz'));
     document.getElementById('modeRefBtn').addEventListener('click', ()=> this.switchMode('ref'));
     document.getElementById('refSearch').addEventListener('input', (e)=> renderRefList(this.refId, e.target.value));
+    const toggleTheory = ()=>{
+      const panel = document.getElementById('theoryPanel');
+      const open = panel.classList.toggle('open');
+      document.getElementById('theoryToggleBtn').textContent = open ? 'Hide ▲' : 'Show ▾';
+    };
+    document.getElementById('theoryHead').addEventListener('click', toggleTheory);
+    document.getElementById('theoryToggleBtn').addEventListener('click', (e)=>{ e.stopPropagation(); toggleTheory(); });
   }
 };
 
