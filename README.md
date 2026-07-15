@@ -55,12 +55,6 @@ JavaScript, Python, Java, C++, Go, C, C#, Rust, TypeScript, Swift, Kotlin, Ruby,
 
 This is a single, dependency-free HTML file.
 
-1. Download `v3_5_0.html`
-2. Open it in any modern browser (Chrome, Firefox, Safari, Edge)
-3. Pick a structure from the sidebar, choose an operation, and press play
-
-No build step, no server, no external runtime dependencies — everything (fonts aside) is bundled in the page.
-
 ## Tech notes
 
 - Pure HTML/CSS/JavaScript — no framework
