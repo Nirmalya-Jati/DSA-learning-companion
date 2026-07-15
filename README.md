@@ -1,6 +1,7 @@
 # Nodes & Notation — A Data Structure Notebook
 
 An interactive, single-page web app for learning data structures. Every structure gets a live, step-by-step visualization, plain-English theory, complexity analysis, and full working implementations across 14 programming languages — all in one self-contained HTML file.
+This is a single, dependency-free HTML file. 
 
 ## Features
 
@@ -50,10 +51,6 @@ A searchable sidebar of 60+ additional topics, grouped by category:
 ## Implementation languages
 
 JavaScript, Python, Java, C++, Go, C, C#, Rust, TypeScript, Swift, Kotlin, Ruby, PHP, Scala.
-
-## Getting started
-
-This is a single, dependency-free HTML file.
 
 ## Tech notes
 
